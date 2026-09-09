@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Jogo de Tiro - Edição Completa</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 10px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* TELA DE MENU */
+    #menu-wrapper {
+      width: 100%;
+      max-width: 800px;
+      height: 600px;
+      background: #000;
+      border: 2px solid #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      text-align: center;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+    }
+
+    .menu-title {
+      font-size: 42px;
+      color: #00FFFF;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px #00FFFF;
+    }
+
+    .high-score-display {
+      font-size: 18px;
+      color: #FFD700;
+      margin-bottom: 15px;
+    }
+
+    .menu-btn {
+      background-color: #222;
+      color: #fff;
+      border: 2px solid #00FFFF;
+      padding: 12px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 6px;
+      width: 260px;
+      transition: 0.2s;
+    }
+
+    .menu-btn:hover {
+      background-color: #00FFFF;
+      color: #000;
+    }
+
+    .sub-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .skins-container {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .skin-card {
+      border: 2px solid #555;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .skin-card.selected {
+      border-color: #00FF00;
+      background-color: #222;
+    }
+
+    .skin-box {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 5px;
+    }
+
+    /* ÁREA DO JOGO */
+    #game-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 800px;
+      position: relative;
+    }
+
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-bottom: 5px;
+      align-items: center;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    #powerup-msg {
+      color: #ffff00;
+      font-weight: bold;
+      height: 20px;
+      margin-bottom: 5px;
+    }
+
+    .canvas-container {
+      position: relative;
+      width: 100%;
+    }
+
+    canvas {
+      border: 2px solid #fff;
+      background-color: #000;
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* TELA DE PAUSA */
+    #pause-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #00FFFF;
+      font-size: 36px;
+      font-weight: bold;
+      text-shadow: 0 0 10px #00FFFF;
+    }
+
+    /* PAINEL DE CONTROLES RESPONSIVO */
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-top: 10px;
+      gap: 8px;
+      flex-wrap: wrap; /* Permite reorganizar em telas muito pequenas */
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex: 1 1 auto;
+    }
+
+    .btn {
+      background-color: #333;
+      color: #fff;
+      border: 2px solid #555;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      flex: 1 1 auto; /* Torna o botão flexível proporcionalmente */
+      text-align: center;
+      min-width: 0;
+    }
+
+    .btn:active {
+      background-color: #555;
+    }
+
+    .btn-fire {
+      background-color: #d9534f;
+      border-color: #d43f3a;
+      flex: 1.2 1 auto;
+    }
+
+    .btn-bomb {
+      background-color: #f0ad4e;
+      border-color: #eea236;
+      flex: 1.2 1 auto;
+    }
+
+    .btn-pause {
+      background-color: #444;
+      border-color: #777;
+      flex: 0 0 auto;
+      padding: 12px 20px;
+    }
+
+    /* AJUSTES PARA TELAS PEQUENAS (SMARTPHONES) */
+    @media (max-width: 600px) {
+      .menu-title {
+        font-size: 32px;
+      }
+      .menu-btn {
+        width: 100%;
+        max-width: 250px;
+        font-size: 16px;
+      }
+      .controls {
+        gap: 6px;
+      }
+      .btn {
+        padding: 10px 8px;
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TELA DE MENU -->
+  <div id="menu-wrapper">
+    <div id="main-menu" class="sub-screen">
+      <h1 class="menu-title">SPACE SHOOTER</h1>
+      <div class="high-score-display">RECORDE: <span id="menu-highscore">0</span></div>
+      <button class="menu-btn" onclick="goToGameArea()">JOGAR</button>
+      <button class="menu-btn" id="btn-music-toggle" onclick="toggleMusic()">MÚSICA: LIGADA</button>
+      <button class="menu-btn" onclick="showSubScreen('tutorial-screen')">TUTORIAL</button>
+      <button class="menu-btn" onclick="showSubScreen('skins-screen')">SKINS</button>
+      <button class="menu-btn" onclick="showSubScreen('credits-screen')">CRÉDITOS</button>
+    </div>
+
+    <div id="tutorial-screen" class="sub-screen hidden">
+      <h2>TUTORIAL</h2>
+      <p style="max-width: 500px; line-height: 1.6; text-align: left;">
+        <b>Controles:</b><br>
+        - Seta Esquerda / Direita ou Botões: Mover<br>
+        - Espaço / Botão FOGO: Atirar<br>
+        - Tecla B / Botão BOMBA: Destrói inimigos na tela<br>
+        - Tecla P / Botão PAUSA: Pausar o jogo<br><br>
+        <b>Power-ups:</b><br>
+        🟨 Amarelo: Aumenta a velocidade<br>
+        🟪 Rosa: Recupera +1 Vida<br>
+        🟦 Azul: Tiro Triplo por 10s<br><br>
+        <b>Objetivo:</b> Sobreviva e alcance 900 pontos para enfrentar o Chefão!
+      </p>
+      <button class="menu-btn" onclick="showSubScreen('main-menu')">VOLTAR</button>
+    </div>
+
+    <div id="skins-screen" class="sub-screen hidden">
+      <h2>ESCOLHA SUA SKIN</h2>
+      <div class="skins-container">
+        <div class="skin-card selected" onclick="selectSkin('#00FF00', this)">
+          <div class="skin-box" style="background:#00FF00;"></div>
+          <span>Verde</span>
+        </div>
+        <div class="skin-card" onclick="selectSkin('#00FFFF', this)">
+          <div class="skin-box" style="background:#00FFFF;"></div>
+          <span>Ciano</span>
+        </div>
+        <div class="skin-card" onclick="selectSkin('#FF00FF', this)">
+          <div class="skin-box" style="background:#FF00FF;"></div>
+          <span>Púrpura</span>
+        </div>
+      </div>
+      <button class="menu-btn" onclick="showSubScreen('main-menu')">VOLTAR</button>
+    </div>
+
+    <div id="credits-screen" class="sub-screen hidden">
+      <h2>CRÉDITOS</h2>
+      <p style="font-size: 18px; max-width: 500px; line-height: 1.5; color: #00FFFF;">
+        JOGO FEITO TOTALMENTE COM IA DO GOOGLE, E COLABORAÇÃO DE IDEIAS DE ARTHUR INÁCIO (InacioThe02)
+      </p>
+      <button class="menu-btn" onclick="showSubScreen('main-menu')">VOLTAR</button>
+    </div>
+  </div>
+
+  <!-- ÁREA DO JOGO -->
+  <div id="game-wrapper" class="hidden">
+    <div class="hud">
+      <h2>Pontos: <span id="score">0</span> | Recorde: <span id="game-highscore">0</span></h2>
+      <h2>Vidas: <span id="lives">❤️ ❤️ ❤️</span></h2>
+    </div>
+    <div id="powerup-msg"></div>
+    
+    <div class="canvas-container">
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+      <div id="pause-overlay" class="hidden">PAUSADO</div>
+    </div>
+
+    <div class="controls">
+      <div class="btn-group">
+        <button class="btn" id="btnLeft">◄ ESQ</button>
+        <button class="btn" id="btnRight">DIR ►</button>
+      </div>
+      <button class="btn btn-bomb" id="btnBomb">BOMBA 💣 (<span id="bomb-count">2</span>)</button>
+      <button class="btn btn-fire" id="btnFire">FOGO 🔥</button>
+      <button class="btn btn-pause" id="btnPause" onclick="togglePause()">⏸️</button>
+    </div>
+  </div>
+
+  <script>
+    const menuWrapper = document.getElementById("menu-wrapper");
+    const gameWrapper = document.getElementById("game-wrapper");
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreElement = document.getElementById("score");
+    const livesElement = document.getElementById("lives");
+    const msgElement = document.getElementById("powerup-msg");
+    const menuHighScoreEl = document.getElementById("menu-highscore");
+    const gameHighScoreEl = document.getElementById("game-highscore");
+    const bombCountEl = document.getElementById("bomb-count");
+    const pauseOverlay = document.getElementById("pause-overlay");
+
+    /* ================= RECORDES ================= */
+    let highScore = localStorage.getItem("space_shooter_highscore") || 0;
+    menuHighScoreEl.innerText = highScore;
+    gameHighScoreEl.innerText = highScore;
+
+    function checkHighScore() {
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("space_shooter_highscore", highScore);
+        gameHighScoreEl.innerText = highScore;
+        menuHighScoreEl.innerText = highScore;
+      }
+    }
+
+    /* ================= SINTETIZADOR 8-BIT ================= */
+    let audioCtx = null;
+    let isMusicEnabled = true;
+    let musicInterval = null;
+    const retroBassNotes = [110.00, 98.00, 87.31, 82.41];
+    let noteIndex = 0;
+    let musicTempo = 220;
+
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function play8BitSound(freq, duration = 0.1, type = "square", volume = 0.08) {
+      if (!isMusicEnabled || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playExplosionSound() {
+      if (!isMusicEnabled || !audioCtx) return;
+      play8BitSound(120, 0.2, "sawtooth", 0.15);
+      setTimeout(() => play8BitSound(60, 0.25, "sawtooth", 0.15), 50);
+    }
+
+    function start8BitMusic() {
+      if (musicInterval) clearInterval(musicInterval);
+      musicInterval = setInterval(() => {
+        if (gameRunning && !gameOver && !isPaused) {
+          play8BitSound(retroBassNotes[noteIndex], 0.12, "square", 0.06);
+          noteIndex = (noteIndex + 1) % retroBassNotes.length;
+        }
+      }, musicTempo);
+    }
+
+    function toggleMusic() {
+      isMusicEnabled = !isMusicEnabled;
+      document.getElementById("btn-music-toggle").innerText = "MÚSICA: " + (isMusicEnabled ? "LIGADA" : "DESLIGADA");
+    }
+
+    /* ================= EFEITOS VISUAIS ================= */
+    let particles = [];
+    let shakeTimer = 0;
+
+    function triggerScreenShake(duration = 10) {
+      shakeTimer = duration;
+    }
+
+    function createExplosion(x, y, color) {
+      playExplosionSound();
+      for (let i = 0; i < 15; i++) {
+        particles.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8,
+          size: Math.random() * 4 + 2,
+          color: color,
+          life: 20
+        });
+      }
+    }
+
+    /* ================= ESTRUTURA DO JOGO ================= */
+    const stars = [];
+    for (let i = 0; i < 50; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2 + 1,
+        baseSpeed: Math.random() * 2 + 0.5
+      });
+    }
+
+    const player = {
+      x: canvas.width / 2 - 20,
+      y: canvas.height - 50,
+      width: 40,
+      height: 40,
+      color: "#00FF00",
+      baseSpeed: 7,
+      speed: 7,
+      lives: 3,
+      bombs: 2,
+      tripleShotTimer: 0
+    };
+
+    const boss = {
+      active: false,
+      x: canvas.width / 2 - 60,
+      y: -100,
+      targetY: 50,
+      width: 120,
+      height: 80,
+      color: "#9900FF",
+      hp: 100,
+      maxHp: 100,
+      shootTimer: 0,
+      attackPattern: 0
+    };
+
+    const bullets = [];
+    const enemyBullets = [];
+    const enemies = [];
+
+    let score = 0;
+    let keys = {};
+    let enemyTimer = 0;
+    let gameOver = false;
+    let gameRunning = false;
+    let isPaused = false;
+    let gameSpeedMultiplier = 1;
+
+    function showSubScreen(screenId) {
+      document.querySelectorAll('.sub-screen').forEach(s => s.classList.add('hidden'));
+      document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    function selectSkin(color, element) {
+      player.color = color;
+      document.querySelectorAll('.skin-card').forEach(c => c.classList.remove('selected'));
+      element.classList.add('selected');
+    }
+
+    function goToGameArea() {
+      initAudio();
+      menuWrapper.classList.add('hidden');
+      gameWrapper.classList.remove('hidden');
+      gameRunning = true;
+      start8BitMusic();
+    }
+
+    function togglePause() {
+      if (!gameRunning || gameOver) return;
+      isPaused = !isPaused;
+      if (isPaused) {
+        pauseOverlay.classList.remove('hidden');
+      } else {
+        pauseOverlay.classList.add('hidden');
+      }
+    }
+
+    function useBomb() {
+      if (!gameRunning || gameOver || isPaused) return;
+      if (player.bombs > 0 && enemies.length > 0) {
+        player.bombs--;
+        bombCountEl.innerText = player.bombs;
+        triggerScreenShake(15);
+        
+        enemies.forEach(enemy => {
+          createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2, enemy.color);
+          score += 10;
+        });
+        enemies.length = 0;
+        checkHighScore();
+        scoreElement.innerText = score;
+        showMessage("💣 BOMBA ATIVADA!");
+      }
+    }
+
+    function updateLivesDisplay() {
+      livesElement.innerText = "❤️ ".repeat(player.lives).trim() || "💀";
+    }
+
+    function showMessage(msg) {
+      msgElement.innerText = msg;
+      setTimeout(() => { msgElement.innerText = ""; }, 2500);
+    }
+
+    function shoot() {
+      if (!gameRunning || gameOver || isPaused) return;
+      initAudio();
+      play8BitSound(600, 0.05, "square", 0.05);
+
+      if (player.tripleShotTimer > 0) {
+        bullets.push({ x: player.x + player.width / 2 - 2, y: player.y, width: 5, height: 12, color: "#00FFFF", speed: 10 });
+        bullets.push({ x: player.x - 5, y: player.y + 10, width: 5, height: 12, color: "#00FFFF", speed: 9 });
+        bullets.push({ x: player.x + player.width, y: player.y + 10, width: 5, height: 12, color: "#00FFFF", speed: 9 });
+      } else {
+        bullets.push({ x: player.x + 4, y: player.y, width: 5, height: 12, color: "#00FFFF", speed: 9 });
+        bullets.push({ x: player.x + player.width - 9, y: player.y, width: 5, height: 12, color: "#00FFFF", speed: 9 });
+      }
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space" && !keys["Space"]) shoot();
+      if (e.code === "KeyB" && !keys["KeyB"]) useBomb();
+      if (e.code === "KeyP" && !keys["KeyP"]) togglePause();
+      keys[e.code] = true;
+    });
+
+    window.addEventListener("keyup", (e) => { keys[e.code] = false; });
+
+    const bindTouchMovement = (id, code) => {
+      const btn = document.getElementById(id);
+      btn.addEventListener("touchstart", (e) => { e.preventDefault(); keys[code] = true; });
+      btn.addEventListener("touchend", (e) => { e.preventDefault(); keys[code] = false; });
+      btn.addEventListener("mousedown", () => keys[code] = true);
+      btn.addEventListener("mouseup", () => keys[code] = false);
+    };
+
+    bindTouchMovement("btnLeft", "ArrowLeft");
+    bindTouchMovement("btnRight", "ArrowRight");
+
+    // Eventos Touch / Mouse para Bombas e Tiro
+    const bindTouchAction = (id, callback) => {
+      const btn = document.getElementById(id);
+      btn.addEventListener("touchstart", (e) => { e.preventDefault(); callback(); });
+      btn.addEventListener("mousedown", (e) => { e.preventDefault(); callback(); });
+    };
+
+    bindTouchAction("btnFire", shoot);
+    bindTouchAction("btnBomb", useBomb);
+
+    function applyPowerUp(type) {
+      if (type === "yellow") {
+        player.speed = player.baseSpeed + 4;
+        showMessage("⚡ VELOCIDADE AUMENTADA!");
+      } else if (type === "pink") {
+        if (player.lives < 5) {
+          player.lives++;
+          updateLivesDisplay();
+          showMessage("❤️ +1 VIDA RECUPERADA!");
+        }
+      } else if (type === "blue") {
+        player.tripleShotTimer = 600;
+        showMessage("🔫 TIRO TRIPLO ATIVADO (10s)!");
+      }
+    }
+
+    function checkSpeedProgress() {
+      if (score >= 900 && !boss.active) {
+        boss.active = true;
+        enemies.length = 0;
+        musicTempo = 140;
+        start8BitMusic();
+        showMessage("⚠️ CHEFÃO APROXIMANDO-SE! ⚠️");
+      } else if (score >= 600 && gameSpeedMultiplier < 1.8) {
+        gameSpeedMultiplier = 1.8;
+        musicTempo = 170;
+        start8BitMusic();
+      } else if (score >= 300 && gameSpeedMultiplier < 1.4) {
+        gameSpeedMultiplier = 1.4;
+        musicTempo = 190;
+        start8BitMusic();
+      }
+    }
+
+    function updateBoss() {
+      if (!boss.active) return;
+
+      if (boss.y < boss.targetY) {
+        boss.y += 1;
+        return;
+      }
+
+      boss.shootTimer++;
+      if (boss.shootTimer % 40 === 0) {
+        boss.attackPattern = (boss.attackPattern + 1) % 3;
+
+        if (boss.attackPattern === 0) {
+          enemyBullets.push({ x: boss.x + 20, y: boss.y + boss.height, vx: 0, vy: 5 });
+          enemyBullets.push({ x: boss.x + boss.width - 20, y: boss.y + boss.height, vx: 0, vy: 5 });
+        } else if (boss.attackPattern === 1) {
+          enemyBullets.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, vx: -2, vy: 4 });
+          enemyBullets.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, vx: 0, vy: 5 });
+          enemyBullets.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, vx: 2, vy: 4 });
+        } else if (boss.attackPattern === 2) {
+          const dx = player.x - (boss.x + boss.width / 2);
+          const dy = player.y - (boss.y + boss.height);
+          const angle = Math.atan2(dy, dx);
+          enemyBullets.push({
+            x: boss.x + boss.width / 2,
+            y: boss.y + boss.height,
+            vx: Math.cos(angle) * 5,
+            vy: Math.sin(angle) * 5
+          });
+        }
+      }
+    }
+
+    function update() {
+      if (!gameRunning || gameOver || isPaused) {
+        requestAnimationFrame(update);
+        return;
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
+      stars.forEach(star => {
+        star.y += star.baseSpeed * gameSpeedMultiplier;
+        if (star.y > canvas.height) {
+          star.y = 0;
+          star.x = Math.random() * canvas.width;
+        }
+      });
+
+      checkSpeedProgress();
+
+      if (player.tripleShotTimer > 0) player.tripleShotTimer--;
+
+      if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+      if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += player.speed;
+
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].y -= bullets[i].speed;
+
+        if (boss.active &&
+            bullets[i].x < boss.x + boss.width &&
+            bullets[i].x + bullets[i].width > boss.x &&
+            bullets[i].y < boss.y + boss.height &&
+            bullets[i].y + bullets[i].height > boss.y) {
+          
+          boss.hp -= 1;
+          createExplosion(bullets[i].x, bullets[i].y, "#00FFFF");
+          bullets.splice(i, 1);
+
+          if (boss.hp <= 0) {
+            triggerScreenShake(30);
+            createExplosion(boss.x + boss.width/2, boss.y + boss.height/2, "#9900FF");
+            gameOver = true;
+            checkHighScore();
+            setTimeout(() => {
+              alert("VOCÊ VENCEU O CHEFÃO! Pontuação final: " + (score + 500));
+              location.reload();
+            }, 500);
+            return;
+          }
+          continue;
+        }
+
+        if (bullets[i] && bullets[i].y < 0) bullets.splice(i, 1);
+      }
+
+      for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const eb = enemyBullets[i];
+        eb.x += eb.vx;
+        eb.y += eb.vy;
+
+        if (eb.x < player.x + player.width &&
+            eb.x + 8 > player.x &&
+            eb.y < player.y + player.height &&
+            eb.y + 8 > player.y) {
+          
+          enemyBullets.splice(i, 1);
+          player.lives--;
+          triggerScreenShake(12);
+          createExplosion(player.x + player.width/2, player.y + player.height/2, player.color);
+          updateLivesDisplay();
+
+          if (player.lives <= 0) {
+            gameOver = true;
+            checkHighScore();
+            alert("Game Over! O Chefão te derrotou. Pontos: " + score);
+            location.reload();
+            return;
+          }
+          continue;
+        }
+
+        if (eb.y > canvas.height || eb.x < 0 || eb.x > canvas.width) {
+          enemyBullets.splice(i, 1);
+        }
+      }
+
+      if (boss.active) {
+        updateBoss();
+      } else {
+        enemyTimer++;
+        if (enemyTimer % Math.max(15, Math.floor(45 / gameSpeedMultiplier)) === 0) {
+          const size = 30;
+          const startX = Math.random() * (canvas.width - size - 60) + 30;
+          
+          const rand = Math.random();
+          let type = "red", color = "#FF3333";
+          if (rand < 0.05) { type = "yellow"; color = "#FFFF00"; }
+          else if (rand < 0.10) { type = "pink"; color = "#FF69B4"; }
+          else if (rand < 0.15) { type = "blue"; color = "#00BFFF"; }
+
+          enemies.push({
+            x: startX,
+            y: -size,
+            startX: startX,
+            width: size,
+            height: size,
+            color: color,
+            type: type,
+            speed: 2 * gameSpeedMultiplier,
+            isZigZag: Math.random() < 0.40,
+            zigzagAngle: 0
+          });
+        }
+      }
+
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const enemy = enemies[i];
+        enemy.y += enemy.speed;
+
+        if (enemy.isZigZag) {
+          enemy.zigzagAngle += 0.05 * gameSpeedMultiplier;
+          enemy.x = enemy.startX + Math.sin(enemy.zigzagAngle) * 40;
+        }
+
+        let enemyRemoved = false;
+
+        if (enemy.y + enemy.height > canvas.height) {
+          enemies.splice(i, 1);
+          player.lives--;
+          triggerScreenShake(8);
+          updateLivesDisplay();
+          enemyRemoved = true;
+        }
+
+        if (!enemyRemoved &&
+            player.x < enemy.x + enemy.width &&
+            player.x + player.width > enemy.x &&
+            player.y < enemy.y + enemy.height &&
+            player.y + player.height > enemy.y) {
+          createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2, enemy.color);
+          enemies.splice(i, 1);
+          player.lives--;
+          triggerScreenShake(12);
+          updateLivesDisplay();
+          enemyRemoved = true;
+        }
+
+        if (player.lives <= 0) {
+          gameOver = true;
+          checkHighScore();
+          alert("Game Over! Sua pontuação final: " + score);
+          location.reload();
+          return;
+        }
+
+        if (!enemyRemoved) {
+          for (let j = bullets.length - 1; j >= 0; j--) {
+            if (
+              bullets[j].x < enemy.x + enemy.width &&
+              bullets[j].x + bullets[j].width > enemy.x &&
+              bullets[j].y < enemy.y + enemy.height &&
+              bullets[j].y + bullets[j].height > enemy.y
+            ) {
+              applyPowerUp(enemy.type);
+              createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2, enemy.color);
+              bullets.splice(j, 1);
+              enemies.splice(i, 1);
+              score += 10;
+              checkHighScore();
+              scoreElement.innerText = score;
+              break;
+            }
+          }
+        }
+      }
+
+      draw();
+      requestAnimationFrame(update);
+    }
+
+    function drawShip(x, y, width, height, color, isInverted = false) {
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      if (!isInverted) {
+        ctx.moveTo(x + width / 2, y);
+        ctx.lineTo(x + width, y + height);
+        ctx.lineTo(x + width * 0.8, y + height * 0.8);
+        ctx.lineTo(x + width * 0.2, y + height * 0.8);
+        ctx.lineTo(x, y + height);
+      } else {
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + width * 0.2, y + height * 0.2);
+        ctx.lineTo(x + width * 0.8, y + height * 0.2);
+        ctx.lineTo(x + width, y);
+        ctx.lineTo(x + width / 2, y + height);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function draw() {
+      ctx.save();
+      
+      if (shakeTimer > 0) {
+        const shakeX = (Math.random() - 0.5) * 10;
+        const shakeY = (Math.random() - 0.5) * 10;
+        ctx.translate(shakeX, shakeY);
+        shakeTimer--;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#FFFFFF";
+      stars.forEach(star => ctx.fillRect(star.x, star.y, star.size, star.size));
+
+      particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      });
+
+      drawShip(player.x, player.y, player.width, player.height, player.color, false);
+
+      bullets.forEach(b => {
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x, b.y, b.width, b.height);
+      });
+
+      ctx.fillStyle = "#FF0055";
+      enemyBullets.forEach(eb => {
+        ctx.fillRect(eb.x, eb.y, 8, 8);
+      });
+
+      enemies.forEach(e => {
+        drawShip(e.x, e.y, e.width, e.height, e.color, true);
+      });
+
+      if (boss.active) {
+        ctx.fillStyle = boss.color;
+        ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+
+        ctx.fillStyle = "#555";
+        ctx.fillRect(canvas.width / 2 - 100, 15, 200, 15);
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(canvas.width / 2 - 100, 15, (boss.hp / boss.maxHp) * 200, 15);
+        ctx.strokeStyle = "#FFF";
+        ctx.strokeRect(canvas.width / 2 - 100, 15, 200, 15);
+      }
+
+      ctx.restore();
+    }
+
+    update();
+  </script>
+</body>
+</html>
